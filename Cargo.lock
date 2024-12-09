@@ -33,13 +33,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "advent_2024_6"
-version = "0.1.0"
-dependencies = [
- "common",
-]
-
-[[package]]
 name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"

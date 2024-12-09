@@ -4,7 +4,6 @@ use chrono::Datelike;
 use inquire::Select;
 use std::{env, path::PathBuf};
 use tracing::{debug, info, level_filters::LevelFilter};
-use tracing_subscriber::util::SubscriberInitExt;
 
 mod advent_api;
 
