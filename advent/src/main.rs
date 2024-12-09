@@ -3,7 +3,8 @@ use anyhow::bail;
 use chrono::Datelike;
 use inquire::Select;
 use std::{env, path::PathBuf};
-use tracing::{debug, info};
+use tracing::{debug, info, level_filters::LevelFilter};
+use tracing_subscriber::util::SubscriberInitExt;
 
 mod advent_api;
 
@@ -72,10 +73,19 @@ enum Command {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    tracing_subscriber::fmt::init();
-    debug!("DEBUG ENABLED");
+    let log_level = if cli.debug > 0 {
+        LevelFilter::DEBUG
+    } else {
+        LevelFilter::INFO
+    };
 
-    // TODO: set up logging with verbosity arg
+    tracing_subscriber::fmt()
+        .pretty()
+        .with_writer(std::io::stderr)
+        .with_max_level(log_level)
+        .init();
+
+    debug!("DEBUG ENABLED");
 
     let today = chrono::Local::now().date_naive();
     let current_year = if today.month() == 12 {
@@ -120,6 +130,7 @@ fn main() -> anyhow::Result<()> {
                     bail!("{year_dir:?} exists but is not a directory");
                 }
                 let available_days = if !year_dir.exists() {
+                    debug!("creating directory [{}]", year_dir.display());
                     std::fs::create_dir(year_dir)?;
                     (1..=25).collect()
                 } else {
@@ -151,6 +162,29 @@ fn main() -> anyhow::Result<()> {
                 .arg(format!("advent_{year}_{day}"))
                 .spawn()?;
             child.wait()?;
+            let mut child = std::process::Command::new(std::env::var("CARGO").unwrap())
+                .arg("add")
+                .arg("anyhow")
+                .arg("--package")
+                .arg(format!("advent_{year}_{day}"))
+                .spawn()?;
+            child.wait()?;
+            let mut child = std::process::Command::new(std::env::var("CARGO").unwrap())
+                .arg("add")
+                .arg("tracing")
+                .arg("--package")
+                .arg(format!("advent_{year}_{day}"))
+                .spawn()?;
+            child.wait()?;
+            let main_template = include_bytes!("../solution_template.rs");
+            std::fs::write(
+                ws_root
+                    .join(year.to_string())
+                    .join(day.to_string())
+                    .join("src")
+                    .join("main.rs"),
+                main_template,
+            )?;
         }
 
         Command::Submit {
