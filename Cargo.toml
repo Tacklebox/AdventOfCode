@@ -3,5 +3,5 @@
 resolver = "2"
 members = [
   "common",
-  "advent",
+  "advent", "2024/9",
 ]
