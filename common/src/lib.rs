@@ -1,6 +1,8 @@
 use tracing_subscriber::filter::LevelFilter;
 
 pub mod cli;
+pub mod grid;
+pub mod iterators;
 
 pub fn advent<P1, P2, O1, O2>(part1: P1, part2: P2) -> anyhow::Result<String>
 where
