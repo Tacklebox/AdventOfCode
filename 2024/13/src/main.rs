@@ -1,6 +1,84 @@
+use std::ops::Mul;
+
 use float_cmp::{ApproxEq, F64Margin};
 use itertools::Itertools;
-use nalgebra::ComplexField;
+
+#[derive(Debug, Copy, Clone)]
+struct TwoTwo((f64, f64), (f64, f64));
+
+impl TwoTwo {
+    fn a(&self) -> f64 {
+        self.0 .0
+    }
+    fn b(&self) -> f64 {
+        self.0 .1
+    }
+    fn c(&self) -> f64 {
+        self.1 .0
+    }
+    fn d(&self) -> f64 {
+        self.1 .1
+    }
+
+    fn ident() -> Self {
+        Self((1f64, 0f64), (0f64, 1f64))
+    }
+    fn invert(&self) -> Option<Self> {
+        let margin = F64Margin::default();
+        let det = (self.a() * self.d()) - (self.b() * self.c());
+        if det.approx_eq(0f64, margin) {
+            return None;
+        }
+
+        let new_a = self.d() / det;
+        let new_b = (-self.b()) / det;
+        let new_c = (-self.c()) / det;
+        let new_d = self.a() / det;
+        let inv = Self((new_a, new_b), (new_c, new_d));
+
+        let ident = *self * inv;
+        if ident.approx_eq(Self::ident(), margin) {
+            Some(inv)
+        } else {
+            None
+        }
+    }
+
+    fn mul_tup(&self, tup: (f64, f64)) -> (f64, f64) {
+        (
+            (self.a() * tup.0 + self.b() * tup.1),
+            (self.c() * tup.0 + self.d() * tup.1),
+        )
+    }
+    fn transpose(&self) -> Self {
+        Self((self.a(), self.c()), (self.b(), self.d()))
+    }
+}
+
+impl ApproxEq for TwoTwo {
+    type Margin = F64Margin;
+
+    fn approx_eq<M: Into<Self::Margin>>(self, other: Self, margin: M) -> bool {
+        let margin = margin.into();
+        self.a().approx_eq(other.a(), margin)
+            && self.b().approx_eq(other.b(), margin)
+            && self.c().approx_eq(other.c(), margin)
+            && self.d().approx_eq(other.d(), margin)
+    }
+    // add code here
+}
+impl Mul for TwoTwo {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let a = (self.a() * rhs.a()) + (self.b() * rhs.c());
+        let b = (self.a() * rhs.b()) + (self.b() * rhs.d());
+        let c = (self.c() * rhs.a()) + (self.d() * rhs.c());
+        let d = (self.c() * rhs.b()) + (self.d() * rhs.d());
+        Self((a, b), (c, d))
+    }
+    // add code here
+}
 
 fn main() -> anyhow::Result<()> {
     println!("{}", common::advent(part1, part2)?);
@@ -85,7 +163,7 @@ fn part1(input: Vec<String>) -> anyhow::Result<usize> {
     Ok(total)
 }
 
-fn part2(input: Vec<String>) -> anyhow::Result<i64> {
+fn part2(input: Vec<String>) -> anyhow::Result<usize> {
     let mut total = 0;
     for (idx, machine) in input.chunks(4).enumerate() {
         let a = &machine[0];
@@ -131,32 +209,27 @@ fn part2(input: Vec<String>) -> anyhow::Result<i64> {
             .tuples()
             .next()
             .unwrap();
-        let (c1, c2) = prize;
-        let (a1, a2) = a;
-        let (b1, b2) = b;
-        let dividend = c1 * b2 - b1 * c2;
-        let divisor = a1 * b2 - b1 * a2;
-        if divisor.approx_eq(0f64, F64Margin::default()) {
-            continue;
+        // let system = TwoTwo((a.0, b.0), (a.1, b.1));
+        let system = TwoTwo(a, b).transpose();
+        if let Some(inverted_system) = system.invert() {
+            println!("inverse found for machine {idx}: {inverted_system:?}");
+            let (a_presses, b_presses) = inverted_system.mul_tup(prize);
+            println!("inverse multiplied by prize results in {a_presses} a and {b_presses} b");
+            if a_presses.approx_eq(a_presses.round(), F64Margin::default())
+                && b_presses.approx_eq(b_presses.round(), F64Margin::default())
+                && a_presses.round() >= 0f64
+                && b_presses.round() >= 0f64
+            {
+                let cost = (3 * a_presses.round() as usize) + b_presses.round() as usize;
+                println!("Machine {idx} cost {cost} tokens");
+                total += cost;
+            }
+        } else {
+            println!("No inverse found for machine {idx}");
         }
-        let a_presses = dividend / divisor;
-        if !a_presses.fract().approx_eq(0f64, F64Margin::default()) {
-            continue;
-        }
-        let dividend = a1 * c2 - c1 * a2;
-        let b_presses = dividend / divisor;
-        if !b_presses.fract().approx_eq(0f64, F64Margin::default()) {
-            continue;
-        }
-        total += (3 * a_presses.round() as i64) + b_presses.round() as i64;
     }
     Ok(total)
 }
-
-// In rust Solves the system of linear equations:
-// a.0 * a_count + b.0 * b_count = p.0
-// a.1 * a_count + b.1 * b_count = p.1
-// Returns Some((a_count, b_count)) if a solution exists, otherwise None.
 
 #[cfg(test)]
 mod tests {

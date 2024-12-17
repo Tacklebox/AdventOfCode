@@ -28,6 +28,25 @@ impl<T> Grid<T> {
         }
     }
 
+    pub fn from_parts(storage: Vec<T>, width: usize, height: usize) -> Self {
+        Self {
+            width,
+            height,
+            storage,
+        }
+    }
+
+    pub fn from_rows(rows: Vec<Vec<T>>) -> Self {
+        let height = rows.len();
+        let width = rows.first().map(|row| row.len()).unwrap_or_default();
+        let storage = rows.into_iter().flatten().collect();
+        Self {
+            width,
+            height,
+            storage,
+        }
+    }
+
     pub fn points(&self) -> impl Iterator<Item = Point> {
         coordinates::griderator(0..self.width as i64, 0..self.height as i64)
     }
@@ -41,6 +60,19 @@ impl<T> Grid<T> {
             return None;
         }
         self.storage.get((x as usize) + (self.width * (y as usize)))
+    }
+
+    pub fn set<IP>(&mut self, point: IP, val: T) -> Option<&T>
+    where
+        IP: Into<Point>,
+    {
+        let Point(x, y) = point.into();
+        if x < 0 || y < 0 || x >= self.width as i64 || y >= self.height as i64 {
+            return None;
+        }
+        let index = (x as usize) + (self.width * (y as usize));
+        self.storage[index] = val;
+        self.storage.get(index)
     }
 }
 
@@ -76,13 +108,13 @@ pub mod coordinates {
     }
 
     pub const NORTH: Point = Point(0, -1);
-    pub const NORTH_WEST: Point = Point(1, -1);
-    pub const WEST: Point = Point(1, 0);
-    pub const SOUTH_WEST: Point = Point(1, 1);
+    pub const NORTH_WEST: Point = Point(-1, -1);
+    pub const WEST: Point = Point(-1, 0);
+    pub const SOUTH_WEST: Point = Point(-1, 1);
     pub const SOUTH: Point = Point(0, 1);
-    pub const SOUTH_EAST: Point = Point(-1, 1);
-    pub const EAST: Point = Point(-1, 0);
-    pub const NORTH_EAST: Point = Point(-1, -1);
+    pub const SOUTH_EAST: Point = Point(1, 1);
+    pub const EAST: Point = Point(1, 0);
+    pub const NORTH_EAST: Point = Point(1, -1);
 
     pub const UNIT: &[Point] = &[
         NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST,
