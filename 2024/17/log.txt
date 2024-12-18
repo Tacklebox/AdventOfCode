@@ -1,0 +1,9 @@
+Corrupt machine:
+TBC { a: 2024, b: 0, c: 0, pc: 0, program: [0, 3, 5, 4, 3, 0], output_buffer: [] }
+Searching for digit 0
+Searching for digit 3
+Searching for digit 4
+Searching for digit 5
+Searching for digit 3
+Searching for digit 0
+0
