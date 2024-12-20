@@ -91,11 +91,13 @@ fn part1(input: Vec<String>) -> anyhow::Result<String> {
 fn part2(input: Vec<String>) -> anyhow::Result<i64> {
     let corrupt_tbc = TBC::from_input(input);
     // println!("Corrupt machine:\n{corrupt_tbc:?}");
-    let mut digits = corrupt_tbc.program.clone();
-    digits.reverse();
     let mut prev_bits: Vec<i64> = vec![0];
     let mut next_bits: Vec<i64> = Vec::new();
-    for &digit in digits.iter() {
+    for i in 1..=corrupt_tbc.program.len() {
+        println!(
+            "looking for digit {}",
+            corrupt_tbc.program[corrupt_tbc.program.len() - i]
+        );
         for &prev_part in &prev_bits {
             for a in 0i64..8 {
                 let mut tbc = corrupt_tbc.clone();
@@ -104,7 +106,11 @@ fn part2(input: Vec<String>) -> anyhow::Result<i64> {
                 while !tbc.is_halted() {
                     let _ = tbc.step();
                 }
-                if *tbc.output_buffer.first().unwrap() == digit {
+                if tbc.output_buffer == tbc.program[tbc.program.len() - i..] {
+                    println!(
+                        "an initial a value of {a_test} causes output of {:?}",
+                        tbc.output_buffer
+                    );
                     next_bits.push(a_test);
                 }
             }

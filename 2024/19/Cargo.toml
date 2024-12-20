@@ -1,0 +1,10 @@
+[package]
+name = "advent_2024_19"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.94"
+common = { version = "0.0.0", path = "../../common" }
+radix_trie = "0.2.1"
+tracing = "0.1.41"
