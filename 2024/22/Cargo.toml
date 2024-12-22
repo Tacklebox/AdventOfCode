@@ -1,0 +1,11 @@
+[package]
+name = "advent_2024_22"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+common = { version = "0.0.0", path = "../../common" }
+itertools = "0.13.0"
+rayon = "1.10.0"
+tracing = "0.1.41"

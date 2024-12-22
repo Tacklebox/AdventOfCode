@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use coordinates::Point;
 
 #[derive(Debug, Clone)]
@@ -5,6 +7,36 @@ pub struct Grid<T> {
     pub width: usize,
     pub height: usize,
     storage: Vec<T>,
+}
+
+impl Grid<char> {
+    pub fn from_input(input: Vec<String>, locate: &[char]) -> (Self, HashMap<char, Vec<Point>>) {
+        let mut storage = Vec::new();
+        let mut height = 0;
+        let mut location_list: HashMap<char, Vec<Point>> = HashMap::new();
+        for row in input {
+            for (x, c) in row.chars().enumerate() {
+                storage.push(c);
+                if locate.contains(&c) {
+                    location_list
+                        .entry(c)
+                        .or_default()
+                        .push(Point::from((x, height)));
+                }
+            }
+            height += 1;
+        }
+        let width = storage.len() / height;
+        eprintln!("Initialized grid with width: {width}, height: {height}");
+        (
+            Self {
+                width,
+                height,
+                storage,
+            },
+            location_list,
+        )
+    }
 }
 
 impl<T> Grid<T> {
@@ -81,6 +113,12 @@ pub mod coordinates {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct Point(pub i64, pub i64);
 
+    impl Point {
+        pub fn dist(&self, rhs: Self) -> usize {
+            (self.0.abs_diff(rhs.0) + self.1.abs_diff(rhs.1)) as usize
+        }
+    }
+
     impl Add for Point {
         type Output = Point;
         fn add(self, rhs: Self) -> Self::Output {
@@ -98,6 +136,12 @@ pub mod coordinates {
     impl From<(i64, i64)> for Point {
         fn from(value: (i64, i64)) -> Self {
             Self(value.0, value.1)
+        }
+    }
+
+    impl From<(i32, i32)> for Point {
+        fn from(value: (i32, i32)) -> Self {
+            Self(value.0 as i64, value.1 as i64)
         }
     }
 

@@ -7,6 +7,7 @@ use common::grid::{
 use itertools::Itertools;
 use pathfinding::directed::astar::astar_bag_collect;
 
+type Keypad = HashMap<char, Point>;
 fn main() -> anyhow::Result<()> {
     println!("{}", common::advent(part1, part2)?);
     Ok(())
@@ -16,7 +17,7 @@ fn part1(input: Vec<String>) -> anyhow::Result<String> {
     todo!()
 }
 
-fn direction_keypad() -> HashMap<char, Point> {
+fn direction_keypad() -> Keypad {
     HashMap::from([
         ('^', Point(1, 0)),
         ('A', Point(2, 0)),
@@ -25,32 +26,8 @@ fn direction_keypad() -> HashMap<char, Point> {
         ('>', Point(2, 1)),
     ])
 }
-/*
-<^
-v<<A>^A
-v<A<AA>>^AvA<^A>A
----
-v<A
-<a
->>^A
-v<<A
->>^A
-A
-vA
-A
-<^A
->A
-V<A
 
-
---
-
-^<
-<Av<A
-v<<A>>^Av<A<A>>^A
-
-*/
-fn numeric_keypad() -> HashMap<char, Point> {
+fn numeric_keypad() -> Keypad {
     HashMap::from([
         ('7', Point(0, 0)),
         ('8', Point(1, 0)),
@@ -66,9 +43,13 @@ fn numeric_keypad() -> HashMap<char, Point> {
     ])
 }
 
-fn part2(input: Vec<String>) -> anyhow::Result<i64> {
-    let _ = input;
-    todo!();
+fn part2(input: Vec<String>) -> anyhow::Result<i64> {}
+
+fn solve_directions(directions: &str, keypad: &Keypad, depth: usize) -> String {
+    if depth == 0 {
+        return directions.to_owned();
+    }
+    String::new()
 }
 
 #[cfg(test)]
