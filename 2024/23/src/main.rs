@@ -28,11 +28,15 @@ impl Clique {
             verticies: vec![tuple.0.min(tuple.1), tuple.0.max(tuple.1)],
         }
     }
+    #[allow(dead_code)]
     fn len(&self) -> usize {
         self.verticies.len()
     }
     fn format_members(&self) -> String {
         self.verticies.iter().map(index_to_str).sorted().join(",")
+    }
+    fn contains_vertex(&self, vertex: usize) -> bool {
+        self.verticies.contains(&vertex)
     }
 }
 
@@ -42,9 +46,14 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn part1(input: Vec<String>) -> anyhow::Result<usize> {
-    let (adjacency, _) = construct_adjacency(&input);
-    let n_t_triangles = count_t_triangles(&adjacency);
-    Ok(n_t_triangles)
+    let (adjacency, verticies) = construct_adjacency(&input);
+    let t_pairs = t_desktops();
+    let mut t_cliques: HashSet<Clique> = clique_pairs(&input)
+        .into_iter()
+        .filter(|c| t_pairs.iter().any(|&vertex| c.contains_vertex(vertex)))
+        .collect();
+    t_cliques = grow_cliques(t_cliques, &adjacency, &verticies);
+    Ok(t_cliques.len())
 }
 
 fn part2(input: Vec<String>) -> anyhow::Result<String> {
@@ -95,8 +104,7 @@ fn index_to_str(i: &usize) -> String {
 
 fn str_to_index(s: &str) -> usize {
     let sb = s.as_bytes();
-    let index = ((sb[0] - b'a') as usize * 26) + ((sb[1] - b'a') as usize);
-    index
+    ((sb[0] - b'a') as usize * 26) + ((sb[1] - b'a') as usize)
 }
 
 fn construct_adjacency(input: &[String]) -> (Vec<Vec<usize>>, Vec<usize>) {
@@ -114,67 +122,14 @@ fn construct_adjacency(input: &[String]) -> (Vec<Vec<usize>>, Vec<usize>) {
     (adjacency, verticies.into_iter().collect_vec())
 }
 
-fn sorted_triple(a: usize, b: usize, c: usize) -> [usize; 3] {
-    let mut t = [a, b, c];
-    t.sort();
-    t
-}
-
-fn largest_clique(adjacency: &[Vec<usize>]) -> usize {
-    let tpairs = [
+fn t_desktops() -> Vec<usize> {
+    [
         "ta", "tb", "tc", "td", "te", "tf", "tg", "th", "ti", "tj", "tk", "tl", "tm", "tn", "to",
         "tp", "tq", "tr", "ts", "tt", "tu", "tv", "tw", "tx", "ty", "tz",
     ]
     .into_iter()
     .map(str_to_index)
-    .collect_vec();
-    let mut seen = HashSet::new();
-    let mut t_triangles = 0;
-    for i in tpairs {
-        for j in 0..ADJ_SIZE {
-            if j == i {
-                continue;
-            }
-            for k in j + 1..ADJ_SIZE {
-                if !seen.contains(&sorted_triple(i, j, k)) {
-                    seen.insert(sorted_triple(i, j, k));
-                    if adjacency[i][j] == 1 && adjacency[i][k] == 1 && adjacency[j][k] == 1 {
-                        t_triangles += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    t_triangles
-}
-fn count_t_triangles(adjacency: &[Vec<usize>]) -> usize {
-    let tpairs = [
-        "ta", "tb", "tc", "td", "te", "tf", "tg", "th", "ti", "tj", "tk", "tl", "tm", "tn", "to",
-        "tp", "tq", "tr", "ts", "tt", "tu", "tv", "tw", "tx", "ty", "tz",
-    ]
-    .into_iter()
-    .map(str_to_index)
-    .collect_vec();
-    let mut seen = HashSet::new();
-    let mut t_triangles = 0;
-    for i in tpairs {
-        for j in 0..ADJ_SIZE {
-            if j == i {
-                continue;
-            }
-            for k in j + 1..ADJ_SIZE {
-                if !seen.contains(&sorted_triple(i, j, k)) {
-                    seen.insert(sorted_triple(i, j, k));
-                    if adjacency[i][j] == 1 && adjacency[i][k] == 1 && adjacency[j][k] == 1 {
-                        t_triangles += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    t_triangles
+    .collect_vec()
 }
 
 #[cfg(test)]
@@ -196,15 +151,14 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        todo!("Add test for part 2");
-        // let inputs: Vec<Vec<String>> = [include_str!("../testcase_1.txt")]
-        //     .iter()
-        //     .map(|input| input.lines().map(String::from).collect::<Vec<String>>())
-        //     .collect();
-        // let outputs = [42];
-        // assert_eq!(inputs.len(), outputs.len());
-        // for (input, &output) in inputs.into_iter().zip(outputs.iter()) {
-        //     assert_eq!(part2(input).unwrap(), output);
-        // }
+        let inputs: Vec<Vec<String>> = [include_str!("../testcase_1.txt")]
+            .iter()
+            .map(|input| input.lines().map(String::from).collect::<Vec<String>>())
+            .collect();
+        let outputs = ["co,de,ka,ta"];
+        assert_eq!(inputs.len(), outputs.len());
+        for (input, &output) in inputs.into_iter().zip(outputs.iter()) {
+            assert_eq!(part2(input).unwrap(), output);
+        }
     }
 }
